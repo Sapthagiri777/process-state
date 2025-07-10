@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KrishiMitra AI System - Interactive Process Diagram</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1600px;
+            aspect-ratio: 16/9;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .state-box {
+            position: absolute;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #e0e0e0;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 5;
+        }
+        
+        .state-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+        
+        .state-box.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-5px) scale(1.02);
+            z-index: 6;
+        }
+        
+        .state-box.decision {
+            background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+            color: white;
+            border-color: #ff6b6b;
+        }
+        
+        .state-box.decision:hover {
+            background: linear-gradient(135deg, #ff5252 0%, #ffca28 100%);
+        }
+        
+        .state-icon {
+            font-size: 24px;
+            margin-right: 15px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.2);
+            flex-shrink: 0;
+        }
+        
+        .state-content {
+            flex: 1;
+        }
+        
+        .state-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .state-description {
+            font-size: 11px;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+        
+        .title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+            text-align: center;
+            z-index: 10;
+        }
+        
+        .arrow {
+            position: absolute;
+            width: 2px;
+            background: #bdc3c7;
+            z-index: 1;
+        }
+        
+        .arrow::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: -3px;
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 8px solid #bdc3c7;
+        }
+        
+        .arrow-horizontal {
+            position: absolute;
+            height: 2px;
+            background: #bdc3c7;
+            z-index: 1;
+        }
+        
+        .arrow-horizontal::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: -3px;
+            width: 0;
+            height: 0;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+            border-left: 8px solid #bdc3c7;
+        }
+        
+        .details-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.98);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 15;
+            backdrop-filter: blur(10px);
+        }
+        
+        .details-panel.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .details-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .details-content {
+            color: #34495e;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+            50% { box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3); }
+            100% { box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        }
+        
+        .flow-animation {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            opacity: 0;
+            z-index: 3;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+        
+        .flow-vertical {
+            animation: flowDown 3s infinite;
+        }
+        
+        .flow-horizontal {
+            animation: flowRight 3s infinite;
+        }
+        
+        @keyframes flowDown {
+            0% { opacity: 0; transform: translateY(-10px); }
+            50% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(70px); }
+        }
+        
+        @keyframes flowRight {
+            0% { opacity: 0; transform: translateX(-10px); }
+            50% { opacity: 1; }
+            100% { opacity: 0; transform: translateX(70px); }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">🌾 KrishiMitra AI: Deep Learning Processing Pipeline</div>
+        
+        <!-- Input Layer -->
+        <div class="state-box" id="input" style="top: 80px; left: 50px; width: 280px; height: 60px;">
+            <div class="state-icon">📥</div>
+            <div class="state-content">
+                <div class="state-title">Input Layer</div>
+                <div class="state-description">Photo • Voice • Location • Sensor Data</div>
+            </div>
+        </div>
+        
+        <!-- Sensory Processing -->
+        <div class="state-box" id="sensory" style="top: 180px; left: 50px; width: 280px; height: 60px;">
+            <div class="state-icon">🔍</div>
+            <div class="state-content">
+                <div class="state-title">Sensory Processing</div>
+                <div class="state-description">Image recognition • Speech-to-text • GPS parsing</div>
+            </div>
+        </div>
+        
+        <!-- Feature Extraction -->
+        <div class="state-box" id="feature" style="top: 280px; left: 50px; width: 280px; height: 60px;">
+            <div class="state-icon">🧩</div>
+            <div class="state-content">
+                <div class="state-title">Feature Extraction</div>
+                <div class="state-description">Disease patterns • Pest identification • Health metrics</div>
+            </div>
+        </div>
+        
+        <!-- Context Integration -->
+        <div class="state-box" id="context" style="top: 380px; left: 50px; width: 280px; height: 60px;">
+            <div class="state-icon">🌍</div>
+            <div class="state-content">
+                <div class="state-title">Context Integration</div>
+                <div class="state-description">Weather • Soil conditions • Seasonal factors</div>
+            </div>
+        </div>
+        
+        <!-- Knowledge Retrieval -->
+        <div class="state-box" id="knowledge" style="top: 150px; left: 400px; width: 280px; height: 60px;">
+            <div class="state-icon">🧠</div>
+            <div class="state-content">
+                <div class="state-title">Knowledge Retrieval</div>
+                <div class="state-description">Database queries • Historical matching • Expert knowledge</div>
+            </div>
+        </div>
+        
+        <!-- Decision Synthesis -->
+        <div class="state-box decision" id="decision" style="top: 250px; left: 400px; width: 280px; height: 60px;">
+            <div class="state-icon">⚡</div>
+            <div class="state-content">
+                <div class="state-title">Decision Synthesis</div>
+                <div class="state-description">Solution ranking • Risk assessment • Personalization • Government Scheme </div>
+            </div>
+        </div>
+        
+        <!-- Feedback Integration -->
+        <div class="state-box" id="feedback" style="top: 350px; left: 400px; width: 280px; height: 60px;">
+            <div class="state-icon">🔄</div>
+            <div class="state-content">
+                <div class="state-title">Feedback Integration</div>
+                <div class="state-description">Community input • Outcome tracking • Model updates</div>
+            </div>
+        </div>
+        
+        <!-- Output Layer -->
+        <div class="state-box" id="output" style="top: 250px; left: 750px; width: 280px; height: 60px;">
+            <div class="state-icon">💬</div>
+            <div class="state-content">
+                <div class="state-title">Output Layer</div>
+                <div class="state-description">Localized Voice/Text • Visual Guides • Market Data</div>
+            </div>
+        </div>
+        
+        <!-- Vertical Arrows -->
+        <div class="arrow" style="top: 150px; left: 189px; height: 20px;"></div>
+        <div class="arrow" style="top: 250px; left: 189px; height: 20px;"></div>
+        <div class="arrow" style="top: 350px; left: 189px; height: 20px;"></div>
+        <div class="arrow" style="top: 220px; left: 539px; height: 20px;"></div>
+        <div class="arrow" style="top: 320px; left: 539px; height: 20px;"></div>
+        
+        <!-- Horizontal Arrows -->
+        <div class="arrow-horizontal" style="top: 209px; left: 340px; width: 50px;"></div>
+        <div class="arrow-horizontal" style="top: 279px; left: 340px; width: 50px;"></div>
+               <div class="arrow-horizontal" style="top: 279px; left: 690px; width: 50px;"></div>
+
+        
+        <!-- Vertical Flow Animation Dots -->
+        <div class="flow-animation flow-vertical" style="top: 145px; left: 186px;"></div>
+        <div class="flow-animation flow-vertical" style="top: 245px; left: 186px; animation-delay: 0.5s;"></div>
+        <div class="flow-animation flow-vertical" style="top: 345px; left: 186px; animation-delay: 1s;"></div>
+        <div class="flow-animation flow-vertical" style="top: 215px; left: 536px; animation-delay: 1.5s;"></div>
+        <div class="flow-animation flow-vertical" style="top: 315px; left: 536px; animation-delay: 2s;"></div>
+        
+        <!-- Horizontal Flow Animation Dots -->
+        <div class="flow-animation flow-horizontal" style="top: 206px; left: 340px; animation-delay: 0.8s;"></div>
+        <div class="flow-animation flow-horizontal" style="top: 276px; left: 340px; animation-delay: 1.3s;"></div>
+               <div class="flow-animation flow-horizontal" style="top: 276px; left: 690px; animation-delay: 2.8s;"></div>
+        
+        <!-- Details Panel -->
+        <div class="details-panel" id="detailsPanel">
+            <div class="details-title" id="detailsTitle">Select a processing state to view details</div>
+            <div class="details-content" id="detailsContent">
+                Click on any processing state above to learn more about its role in the KrishiMitra AI system.
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const stateDetails = {
+            input: {
+                title: "Input Layer - Multi-Modal Data Acquisition",
+                content: "The system accepts various input modalities including high-resolution crop images, farmer voice queries in local languages, GPS coordinates for location-based recommendations, and real-time sensor data from IoT devices. Advanced preprocessing ensures data quality and standardization before feeding into the neural pipeline."
+            },
+            sensory: {
+                title: "Sensory Processing - Raw Data Transformation",
+                content: "Deep learning models process raw inputs: CNNs for image analysis, RNNs for speech recognition, and specialized algorithms for sensor data. This layer converts unstructured data into structured formats, performing tasks like image enhancement, noise reduction, and feature normalization with 95%+ accuracy."
+            },
+            feature: {
+                title: "Feature Extraction - Pattern Recognition",
+                content: "Advanced computer vision algorithms identify disease symptoms, pest infestations, and crop health indicators. Uses techniques like object detection, semantic segmentation, and time-series analysis. The system can detect over 200 different crop diseases and 150+ pest species with high precision."
+            },
+            context: {
+                title: "Context Integration - Environmental Intelligence",
+                content: "Fuses extracted features with environmental data including weather patterns, soil conditions, seasonal cycles, and regional agricultural practices. Uses attention mechanisms to weigh different contextual factors, enabling location-specific and time-sensitive recommendations."
+            },
+            knowledge: {
+                title: "Knowledge Retrieval - Expert System Integration",
+                content: "Accesses comprehensive agricultural databases containing expert knowledge, research papers, historical case studies, and best practices. Employs semantic search and knowledge graphs to retrieve relevant information, ensuring recommendations are backed by scientific evidence."
+            },
+            decision: {
+                title: "Decision Synthesis - AI-Driven Recommendations",
+                content: "The core intelligence layer that synthesizes all processed information to generate actionable recommendations. Uses ensemble learning, multi-criteria decision analysis, and optimization algorithms to rank solutions. Considers factors like cost-effectiveness, environmental impact, farmer resources, and automatically integrates government scheme eligibility to provide personalized advice."
+            },
+            feedback: {
+                title: "Feedback Integration - Continuous Learning",
+                content: "Implements reinforcement learning from farmer feedback and outcome tracking. The system continuously improves by learning from successful interventions and adapting to changing agricultural conditions. Community-driven insights help refine recommendations for similar contexts."
+            },
+            output: {
+                title: "Output Layer - Localized Communication",
+                content: "Delivers recommendations through multiple channels: voice synthesis in local languages, visual guides with annotated images, SMS alerts, and mobile app notifications. Ensures accessibility for farmers with varying literacy levels and technology access."
+            }
+        };
+        
+        const stateBoxes = document.querySelectorAll('.state-box');
+        const detailsPanel = document.getElementById('detailsPanel');
+        const detailsTitle = document.getElementById('detailsTitle');
+        const detailsContent = document.getElementById('detailsContent');
+        
+        let currentActive = null;
+        
+        // Add pulsing animation to decision state
+        const decisionBox = document.getElementById('decision');
+        decisionBox.classList.add('pulse');
+        
+        stateBoxes.forEach(box => {
+            box.addEventListener('click', () => {
+                // Remove active class from all boxes
+                stateBoxes.forEach(b => b.classList.remove('active'));
+                
+                // Add active class to clicked box
+                box.classList.add('active');
+                currentActive = box;
+                
+                // Show details panel
+                const stateId = box.id;
+                if (stateDetails[stateId]) {
+                    detailsTitle.textContent = stateDetails[stateId].title;
+                    detailsContent.textContent = stateDetails[stateId].content;
+                    detailsPanel.classList.add('show');
+                }
+            });
+            
+            box.addEventListener('mouseenter', () => {
+                if (currentActive !== box) {
+                    box.style.transform = 'translateY(-3px)';
+                }
+            });
+            
+            box.addEventListener('mouseleave', () => {
+                if (currentActive !== box) {
+                    box.style.transform = 'translateY(0)';
+                }
+            });
+        });
+        
+        // Close details panel when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.state-box') && !e.target.closest('.details-panel')) {
+                stateBoxes.forEach(b => b.classList.remove('active'));
+                detailsPanel.classList.remove('show');
+                currentActive = null;
+            }
+        });
+        
+        // Auto-demo sequence
+        let demoIndex = 0;
+        const demoSequence = ['input', 'sensory', 'feature', 'context', 'knowledge', 'decision', 'feedback', 'output'];
+        
+        function runDemo() {
+            if (demoIndex < demoSequence.length) {
+                const currentState = document.getElementById(demoSequence[demoIndex]);
+                currentState.click();
+                demoIndex++;
+                setTimeout(runDemo, 3000);
+            } else {
+                // Reset demo
+                setTimeout(() => {
+                    demoIndex = 0;
+                    detailsPanel.classList.remove('show');
+                    stateBoxes.forEach(b => b.classList.remove('active'));
+                    setTimeout(runDemo, 2000);
+                }, 5000);
+            }
+        }
+        
+        // Start demo after 2 seconds
+        setTimeout(runDemo, 2000);
+    </script>
+</body>
+</html>
